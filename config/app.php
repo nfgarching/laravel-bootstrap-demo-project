@@ -123,4 +123,21 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rollen für die Routen von nfgarching/core
+    |--------------------------------------------------------------------------
+    |
+    | Ersetzt die Vorgabe des Packages vollständig (mergeConfigFrom mischt nur
+    | die oberste Ebene), deshalb stehen hier alle Gruppen. Die role-Middleware
+    | kennt keine Rangfolge: admin muss in jeder Gruppe genannt werden.
+    |
+    */
+
+    'route_roles' => [
+        'admin' => 'admin',
+        'partner' => 'admin|partner',
+        'user' => 'admin|partner|user',
+    ],
+
 ];
