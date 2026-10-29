@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\DisableDemoRoutes;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->web(append: [DisableDemoRoutes::class]);
+
+        // Gäste landen auf der Seite mit den Demo-Logins, angemeldete Nutzer
+        // auf Gast-Routen (z. B. /login) ebenfalls dort statt auf /dashboard.
+        $middleware->redirectGuestsTo(fn () => route('demo.core.roles'));
+        $middleware->redirectUsersTo(fn () => route('demo.core.roles'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
