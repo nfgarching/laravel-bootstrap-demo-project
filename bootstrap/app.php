@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Hinter Traefik: X-Forwarded-* übernehmen, damit URLs https nutzen und
+        // das Rate-Limit die echte Besucher-IP sieht.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [DisableDemoRoutes::class]);
 
         // Gäste landen auf der Seite mit den Demo-Logins, angemeldete Nutzer
