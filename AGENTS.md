@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Two things live side by side:
 
-1. **The host application** — a stock Laravel 13 skeleton (PHP 8.4, Pest 5, Vite 8 + Tailwind 4, SQLite at `database/database.sqlite`). `app/` holds only `User` and the default controller/provider; `routes/web.php` has one route. There is no application domain code yet.
+1. **The host application** — the public demo site demo.phpmyoffice.de (Laravel 13, PHP 8.4, Pest 5, Vite 8 + Bootstrap 5.3/Bootstrap Icons/highlight.js, SQLite at `database/database.sqlite`, spatie/laravel-permission). It showcases the package: demo pages under `routes/web.php` (`demo.*`), `app/Demo/`, `app/Livewire/Demo/`, `resources/views/demo/`. See `README.md` for the layout and how to add another package section. Tailwind has been removed.
 2. **`packages/nfgarching/core`** — a Bootstrap 5 + Livewire 4 base package (`Nfgarching\Core`) with its own git repository (`github.com/nfgarching/laravel-bootstrap-core`), its own `composer.json`, README, CHANGELOG and `docs/`. This is where essentially all real code is.
 
-**The package is currently not wired into the host application.** There is no `repositories`/`require` entry for `nfgarching/core` in the root `composer.json`, no PSR-4 entry under `autoload`, no `vendor/nfgarching/` symlink, and `LibraryServiceProvider` is not in `bootstrap/providers.php`. Consequently none of its routes, views or components are active — `php artisan route:list` shows only `/` and `/up`. Treat the package as a checked-out library, not as loaded code: do not assume `route('core.props.index')`, `<x-card>` or the `core::` view namespace resolve at runtime until it is wired in.
+**The package is wired in as a Composer path repository** (`nfgarching/core:@dev`, symlinked to `vendor/nfgarching/core`, provider auto-discovered). The demo must not modify the package: adjustments go through the override pattern (`resources/views/layouts/parts/*`, `resources/views/{dashboard,admin}.blade.php`), the registries (`DemoServiceProvider`, `app/Demo/ExamplePackage`), app routes registered after the package's (same method + URI wins), and the `DisableDemoRoutes` web middleware. Collect needed package changes in `docs/package-fixes.md`.
 
-Wiring it in is a dependency change and needs user approval. The package's own README documents the path-repository route; `packages/nfgarching/core/docs/Packages.md` documents both options and recommends the lightweight one (root `autoload` PSR-4 entry + manual provider registration in `bootstrap/providers.php`). Either way it also pulls in `livewire/livewire ^4` and `kyslik/column-sortable ^8`, and some package code references `spatie/laravel-permission` (guarded, optional).
+Blade gotcha in demo views: literal `<x-…>` tags and `@directives` are compiled even inside prose and attribute strings — write `x-button` without brackets and escape directives as `@@include`.
 
 ## Commands
 
@@ -65,7 +65,7 @@ Those tests also assume tables the host does not have — `props` has no active 
 
 ## Conventions specific to this codebase
 
-- **Package views are Bootstrap 5, not Tailwind.** `docs/Format.md` is binding for Blade/Livewire views in the package: no Tailwind utility classes, Bootstrap 5 + Bootstrap Icons loaded by CDN in the layout head, floating labels as the default form pattern, and core components (`<x-card>`, `<x-button>`, `<x-table>`, `<x-modal>`) preferred over hand-rolled markup. The host skeleton's own `resources/` is Tailwind 4 — keep the two straight and match whichever tree you are editing.
+- **Package views are Bootstrap 5, not Tailwind.** `docs/Format.md` is binding for Blade/Livewire views in the package: no Tailwind utility classes, Bootstrap 5 + Bootstrap Icons loaded by CDN in the layout head, floating labels as the default form pattern, and core components (`<x-card>`, `<x-button>`, `<x-table>`, `<x-modal>`) preferred over hand-rolled markup. The host's own `resources/` follows the same Bootstrap rules (the demo overrides the layout head to load Bootstrap via Vite instead of the CDN).
 - `docs/Format.md` also flags `<x-form.*>` / `<x-wire.*>` field components as unstable (they render debug text in labels); use direct Bootstrap markup with `wire:` directives for Livewire fields until they settle.
 - **Domain language is German** — identifiers, docs, CHANGELOG and commit messages in the package are German; user-facing strings go through `{{ __('…') }}`. The package's `CHANGELOG.md` is maintained by hand, newest entries dated under `[Unreleased]`.
 - The package's git repository is independent of the host repository. Commits to `packages/nfgarching/core` must be made in that directory and do not belong in the host's history.
@@ -176,6 +176,16 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
 - Activate the `deploying-to-cloud` skill whenever deploying to Laravel Cloud, configuring Cloud environments or resources, using the Cloud CLI, or troubleshooting Cloud deployments.
+
+=== tests rules ===
+
+# Test Enforcement
+
+- Add or update tests for behavior and logic changes when a test provides meaningful regression coverage.
+- Pure copy, styling, and layout-only changes do not require new or updated tests.
+- When test coverage applies, run the affected tests and ensure they pass.
+- Test the changed behavior and its important failure modes, but do not add tests beyond them.
+- Read the `testing-best-practices` skill before writing tests.
 
 === laravel/core rules ===
 

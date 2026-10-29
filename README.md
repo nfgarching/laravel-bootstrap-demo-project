@@ -1,60 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Demo phpmyoffice
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Öffentliche Demo-Anwendung (**demo.phpmyoffice.de**) für die Laravel-Packages
+von nfgarching. Den Anfang macht das Basis-Package
+[`nfgarching/core`](https://github.com/nfgarching/laravel-bootstrap-core)
+(Bootstrap 5 + Livewire 4). Die App rendert sich selbst im Layout von core –
+Navbar, Sidebar, Offcanvas und Toasts sind also echte Package-Bausteine.
 
-## About Laravel
+Stack: Laravel 13, PHP 8.4, Livewire 4, Bootstrap 5.3 und Bootstrap Icons
+per Vite, highlight.js, SQLite, spatie/laravel-permission.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Lokales Setup
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Das Package wird als Path-Repository aus `packages/nfgarching/core`
+eingebunden (eigenes Git-Repository, vom Host-Repo per `.gitignore`
+ausgenommen):
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/nfgarching/laravel-bootstrap-core.git packages/nfgarching/core
+composer install
+cp .env.example .env            # für lokal: APP_ENV=local, APP_DEBUG=true, APP_URL anpassen
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate --seed
+npm install && npm run build
+composer run dev                # oder: php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Tests: `php artisan test --compact` (Feature-Tests unter `tests/Feature/Demo`).
 
-## Contributing
+## Demo-Konten
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Der Seeder legt die Rollen `user`, `partner`, `admin` und je ein Konto
+(`demo-<rolle>@example.com`) mit zufälligem Passwort an. Angemeldet wird nur
+über die Ein-Klick-Buttons (`POST /demo/login/{role}`, rate-limitiert); ein
+Passwort erscheint nirgends. `/register` ist durch eine App-Route ersetzt.
 
-## Code of Conduct
+## Zurücksetzen: `demo:reset`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan demo:reset          # migrate:fresh --seed --force + cache:clear
+```
 
-## Security Vulnerabilities
+Der Scheduler führt den Befehl täglich um 04:00 Uhr (Europe/Berlin) aus.
+Auf dem Server dafür den Cron-Eintrag für `php artisan schedule:run` jede
+Minute einrichten. Alle Seiten zeigen den Hinweis „Demo – alle Daten werden
+täglich zurückgesetzt.“
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Aufbau
 
-## License
+| Ort | Inhalt |
+| --- | --- |
+| `routes/web.php` | Demo-Routen (`demo.home`, `demo.core.*`), Demo-Login, Overrides von `/register` und `/welcome` |
+| `app/Providers/DemoServiceProvider.php` | Sidebar-Abschnitt und Navbar-Eintrag über die Registries, Livewire-Komponenten, Rate-Limit |
+| `app/Demo/CorePages.php` | Liste der core-Unterseiten (Sidebar, Kacheln, Doku-Links) |
+| `app/Demo/ExamplePackage/` | Pseudo-Package für die Registries-Seite (Navbar, Sidebar, Modal mit `when`-Guard) |
+| `app/Http/Middleware/DisableDemoRoutes.php` | Sperrt Package-Routen, die in der Demo nicht aufrufbar sein dürfen |
+| `app/Livewire/Demo/` | `SafeRaw`/`SafeField` (abgesicherte Package-Modals), `Playground`, `ContactListing` |
+| `resources/views/layouts/parts/` | Overrides der App-Shell (Vite statt CDN, Sidebar, Navbar, Offcanvas, Toasts) |
+| `resources/views/components/demo/` | `x-demo.page` (Seitenrahmen) und `x-demo.example` (Vorschau + Blade-Code) |
+| `resources/views/demo/core/examples/` | Ein Blade-Partial je Beispiel |
+| `docs/package-fixes.md` | Gefundene Probleme im Package mit Lösungsvorschlag |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# laravel-bootstrap-demo-project
-# laravel-bootstrap-demo-project
+Das Package selbst wird nicht verändert – Anpassungen laufen über das
+Override-Pattern, die Registries und eigene Routen.
+
+## Ein weiteres Package als Demo-Bereich ergänzen
+
+Gleiches Muster wie für core, Beispiel `mailer`:
+
+1. **Package einbinden** – Path-Repository in `composer.json`, `composer require nfgarching/mailer:@dev`.
+2. **Seitenliste** – `app/Demo/MailerPages.php` analog zu `CorePages` (Route, Titel, Icon, Doku-Datei).
+3. **Routen** – eigener Präfix und Namensraum in `routes/web.php`:
+   ```php
+   Route::prefix('mailer')->name('demo.mailer.')->controller(MailerController::class)->group(function () {
+       Route::get('/', 'index')->name('index');
+   });
+   ```
+4. **Sidebar-Abschnitt** – eigene View (z. B. `demo.navigation.mailer`) im
+   `DemoServiceProvider` registrieren und in `DemoPackages::upcoming()` den
+   „demnächst“-Eintrag entfernen:
+   ```php
+   $this->app->make(SidebarNavigation::class)->section('demo.navigation.mailer', order: 20);
+   ```
+5. **Seiten** – je Unterseite ein Rahmen wie `x-demo.page` (Einleitung, Karten,
+   Link „Dokumentation auf GitHub“) und je Beispiel ein Partial unter
+   `resources/views/demo/mailer/examples/…`, eingebunden mit
+   `<x-demo.example title="…" view="demo.mailer.examples.…" />`. Braucht ein
+   Beispiel einen Livewire-Kontext, `:livewire="true"` setzen (die
+   `Playground`-Komponente akzeptiert dafür Views unter `demo.core.examples.`
+   – den Präfix bei Bedarf erweitern).
+6. **Kachel** auf der Startseite (`resources/views/demo/home.blade.php`)
+   aktivieren und Feature-Tests unter `tests/Feature/Demo` ergänzen.
