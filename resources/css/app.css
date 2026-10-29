@@ -1,9 +1,41 @@
-@import 'tailwindcss';
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.min.css';
+@import 'highlight.js/styles/github.min.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+[x-cloak] {
+    display: none !important;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+.demo-banner {
+    font-size: 0.8rem;
+}
+
+.demo-example pre {
+    max-height: 28rem;
+    margin-bottom: 0;
+}
+
+.demo-example pre code.hljs {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    background-color: var(--bs-tertiary-bg);
+}
+
+.demo-tile {
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.demo-tile:hover {
+    box-shadow: var(--bs-box-shadow);
+}
+
+.demo-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
